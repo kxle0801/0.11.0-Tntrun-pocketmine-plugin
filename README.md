@@ -1,76 +1,50 @@
-TNT Run Plugin for PocketMine-MP
-A comprehensive TNT Run minigame plugin featuring advanced arena management, PVP mechanics, and player distribution systems.
-Core Gameplay
-TNT Run Mechanics:
+TNT Run Plugin v1.2.0
+A multiplayer TNT Run minigame for PocketMine-MP servers with advanced features and smooth gameplay.
+What It Does
+Players start on a platform made of TNT, sand, and gravel blocks. As they move around, blocks disappear beneath their feet, creating holes. The goal is to keep moving and avoid falling through gaps while other players create more holes. Last player standing wins!
+Key Features
+Arena Management
 
-Players spawn randomly distributed across fall-blocks (TNT, sand, gravel) on the arena's top layer
-Blocks disappear beneath players as they walk, creating holes in the platform
-Players must keep moving to avoid falling through gaps created by themselves and others
-Elimination occurs when players fall below a configurable Y-level threshold
-Last player remaining wins the round
+Create multiple arenas using a simple selection tool
+Players spawn randomly across the platform for fair gameplay
+Arenas automatically reset after each game
 
-Arena System
-Arena Creation & Management:
+Smart Game Flow
 
-Visual region selection using golden axe tool with position confirmation
-Automatic spawn point generation across fall-blocks in the selected region
-Complete arena data persistence with block restoration after games
-Support for multiple simultaneous arenas with independent game states
+Players can't move during countdown (prevents cheating)
+60-second wait time + 5-second countdown before start
+Games become PvP combat after 3 minutes if still ongoing
 
-Player Flow:
+PvP Combat System
 
-Movement restriction during waiting/countdown phases prevents early positioning advantages
-Two-phase game start: 60-second waiting period + 5-second final countdown
-Random spawn distribution ensures fair starting positions across the arena
-Configurable player limits and minimum requirements per arena
+Players get diamond armor and sword when PvP activates
+Special items: Speed boost feather and launch-up emerald
+Combat is disabled for the first 3 minutes
 
-Advanced PVP System
-Timed PVP Activation:
+Player-Friendly Features
 
-PVP damage prevention for first 3 minutes of gameplay
-30-second warning before PVP mode activation
-Automatic diamond gear distribution when PVP begins
-Complete armor set (helmet, chestplate, leggings, boots) auto-equipped
+Click signs with empty hands to join games
+Eliminated players become spectators and can leave anytime
+Automatic transfer back to hub server when games end
 
-Special Items:
+Commands
+For Players:
 
-Diamond Sword (slot 1): Primary combat weapon
-Custom Emerald (383:37, slot 2): Launch boost ability with 3-minute cooldown
-Feather (slot 3): Speed II buff for 7 seconds with 20-second cooldown
+/jointnt <arena> - Join a specific arena
+/listtnt - See all available arenas
+/leave - Exit your current game
 
-Player Management
-Spectator System:
+For Admins:
 
-Eliminated players automatically become spectators with elevated viewing positions
-Bed item provided for easy hub return
-Spectators can observe ongoing matches without interference
+/createtnt <arena> - Create a new arena
+/deltnt <arena> - Delete an arena
+/tntedit on/off - Toggle setup mode
 
-Post-Game Handling:
+Setup
 
-Configurable staggered player transfers to prevent server lag
-Players teleported to spawn before hub transfer or server kick
-Customizable delay timing between individual player actions
+Use /createtnt <name> to start creating an arena
+Use the golden axe to select two corners of your platform
+Place signs with [Arena] on line 1 and arena name on line 2
+Configure settings in config.yml as needed
 
-Technical Features
-Sign Integration:
-
-Dynamic sign detection without config storage to prevent ghost blocks
-Live status updates showing player counts and game states
-Automatic sign formatting with arena information
-Empty-hand interaction for joining games
-
-Configuration System:
-
-Comprehensive settings for all game mechanics
-Configurable elimination rules, timing systems, and item behaviors
-Hub server integration with transfer protocols
-Flexible PVP and ability cooldown management
-
-Supported Game Modes
-
-Waiting Phase: Movement frozen, players accumulate
-Active Phase: Standard TNT Run gameplay with fall-block mechanics
-PVP Phase: Combat enabled with special items after time threshold
-Spectator Phase: Eliminated players can observe and easily exit
-
-The plugin provides a complete TNT Run experience with professional-grade arena management, balanced gameplay mechanics, and robust technical infrastructure suitable for multiplayer servers.
+Perfect for minigame servers looking for an engaging, automated TNT Run experience that handles everything from player management to game flow.

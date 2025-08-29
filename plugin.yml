@@ -1,0 +1,73 @@
+name: TNTRun
+main: TNTRun\Main
+version: 1.2.0
+api: [1.12.0]
+author: Jonathan
+
+commands:
+  createtnt:
+    description: Create a TNT Run arena
+    usage: /createtnt <name>
+    permission: tntrun.create
+  jointnt:
+    description: Join a TNT Run arena
+    usage: /jointnt <name>
+    permission: tntrun.join
+  listtnt:
+    description: List all TNT Run arenas
+    usage: /listtnt
+    permission: tntrun.list
+  deltnt:
+    description: Delete a TNT Run arena
+    usage: /deltnt <name>
+    permission: tntrun.delete
+  tntpos:
+    description: Position selection commands for arena setup
+    usage: /tntpos <cancel|status>
+    permission: tntrun.create
+  tntedit:
+    description: Toggle edit mode on/off
+    usage: /tntedit <on|off>
+    permission: tntrun.edit
+  leave:
+    description: Leave TNT Run arena
+    usage: /leave
+    permission: tntrun.leave
+
+permissions:
+  tntrun.*:
+    description: All TNT Run permissions
+    default: op
+    children:
+      tntrun.create: true
+      tntrun.delete: true
+      tntrun.edit: true
+      tntrun.join: true
+      tntrun.list: true
+      tntrun.autojoin: true
+      tntrun.leave: true
+      tntrun.sign.create: true
+  tntrun.create:
+    description: Create TNT Run arenas and signs
+    default: op
+  tntrun.delete:
+    description: Delete TNT Run arenas
+    default: op
+  tntrun.edit:
+    description: Toggle edit mode and bypass auto-join
+    default: op
+  tntrun.join:
+    description: Join TNT Run arenas manually
+    default: true
+  tntrun.list:
+    description: List TNT Run arenas
+    default: true
+  tntrun.autojoin:
+    description: Be automatically joined to arenas on server join
+    default: true
+  tntrun.leave:
+    description: Leave TNT Run arenas
+    default: true
+  tntrun.sign.create:
+    description: Create and break arena signs
+    default: op

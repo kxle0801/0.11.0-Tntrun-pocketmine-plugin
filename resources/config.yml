@@ -1,0 +1,50 @@
+fall-blocks: [tnt, sand, gravel]
+auto-reset-on-death: true
+
+# Auto-join settings
+edit-mode: false
+auto-join-arena: "main"
+auto-join-enabled: false
+
+# Hub server settings for built-in transfer
+hub-server:
+  enabled: true
+  address: "localhost"
+  port: 19133
+  transfer-message: "§aReturning to hub..."
+  transfer-delay: 3  # seconds to wait before transferring after game end
+
+# Game timing settings
+min-players-to-start: 2
+max-players-per-arena: 16
+wait-time-seconds: 60  # Wait period before countdown starts (to allow max players)
+countdown-seconds: 5   # Final countdown before game starts
+
+# Elimination settings
+elimination:
+  base-y-level: 73      # Fixed Y level to measure fall distance from
+  max-fall-distance: 5  # Blocks players can fall before elimination
+
+# PVP mode settings
+pvp-mode:
+  enabled: true
+  activation-time-minutes: 3  # Minutes after game start to activate PVP
+  warning-time-seconds: 30    # Seconds before PVP activation to warn players
+  
+# Speed boost settings  
+speed-boost:
+  duration-seconds: 7   # How long Speed II effect lasts
+  cooldown-seconds: 20  # Cooldown between feather uses
+
+# Jump boost settings
+jump-boost:
+  launch-height: 8      # Blocks to launch player upward
+  cooldown-minutes: 3   # Cooldown between emerald uses
+
+# Spectator settings
+spectator:
+  auto-spectate-on-death: true
+  allow-early-leave: true
+  spectator-height-offset: 10  # blocks above spawn point
+  give-leave-item: true
+  leave-item-slot: 8  # inventory slot (0-8)

@@ -27,6 +27,13 @@ class Arena {
     private $countdownTask = null;
     private $pvpTimerTask = null;
 
+    private $gamestate = 0;
+
+    const WAITING = 0;
+    const COUNTDOWN = 1;
+    const RUNNING = 2;
+    const ENDING = 3;
+
     public function __construct(Main $plugin, string $name, array $data){
         $this->plugin = $plugin;
         $this->name = $name;
@@ -81,6 +88,7 @@ class Arena {
             }
         }
         
+        $this->updateServerStatus(); // AlphaDays
         $this->plugin->getLogger()->info("Generated " . count($this->spawnPositions) . " spawn positions for arena " . $this->name);
     }
 
@@ -136,6 +144,7 @@ class Arena {
         }
 
         // Update arena signs when player joins
+        $this->updateServerStatus(); // AlphaDays
         $this->plugin->updateArenaSignsFor($this->name);
     }
 
@@ -188,6 +197,9 @@ class Arena {
                 $player->sendMessage("§cYou cannot move until the game starts!");
             }
         }
+
+        $this->setGameState(self::COUNTDOWN);
+        $this->updateServerStatus(); // AlphaDays
 
         // Update arena signs when countdown/waiting starts
         $this->plugin->updateArenaSignsFor($this->name);
@@ -292,6 +304,8 @@ class Arena {
         // Remove from both arrays
         unset($this->alivePlayers[$player->getName()]);
         unset($this->spectatorPlayers[$player->getName()]);
+
+        $this->updateServerStatus(); // AlphaDays
         
         // Reset player state
         $player->setGamemode(Player::SURVIVAL);
@@ -446,6 +460,9 @@ class Arena {
             }
         }
 
+        $this->setGameState(self::RUNNING);
+        $this->updateServerStatus(); // AlphaDays
+
         // Update arena signs when game state changes
         $this->plugin->updateArenaSignsFor($this->name);
     }
@@ -556,6 +573,9 @@ class Arena {
         
         // Reset the arena first
         $this->reset();
+
+        $this->setGameState(self::ENDING);
+        $this->updateServerStatus(); // AlphaDays
         
         // Handle post-game player management
         if(!empty($allPlayers)){
@@ -629,6 +649,9 @@ class Arena {
             $this->pvpTimerTask = null;
         }
 
+        $this->setGameState(self::WAITING);
+        $this->updateServerStatus(); // AlphaDays
+
         // Update arena signs when arena is reset
         $this->plugin->updateArenaSignsFor($this->name);
     }
@@ -660,6 +683,35 @@ class Arena {
         }
         if($this->pvpTimerTask !== null){
             $this->pvpTimerTask->cancel();
+        }
+    }
+
+    public function getGameState(): int {
+        return $this->gamestate;
+    }
+
+    public function setGameState(int $state): void {
+        $this->gamestate = $state;
+    }
+
+    public function resetGameState(): void {
+        $this->gamestate = self::WAITING;
+    }
+
+    public function updateServerStatus(): void {
+        if ($this->plugin->getStatusUpdater() !== null) {
+            $currentPlayers = count($this->getPlayers());
+            $maxPlayers = $this->plugin->getConfig()->get("max-players-per-arena", 16);
+            $serverAddress = $this->plugin->getConfig()->get("server-address", "localhost");
+            $serverPort = $this->plugin->getConfig()->get("server-port", 19132);
+            
+            $this->plugin->getStatusUpdater()->updateServerStatus(
+                $this->getGameState(), 
+                $currentPlayers, 
+                $maxPlayers, 
+                $serverAddress, 
+                $serverPort
+            );
         }
     }
 }

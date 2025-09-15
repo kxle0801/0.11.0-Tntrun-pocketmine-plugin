@@ -4,6 +4,7 @@ namespace TNTRun\Listener;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use TNTRun\Main;
+use TNTRun\Arena;
 
 class PlayerJoinListener implements Listener {
 
@@ -88,5 +89,39 @@ class PlayerJoinListener implements Listener {
                 $this->player->sendMessage("§eUse §b/listtnt §eto see arena status or §b/jointnt <name> §eto join manually.");
             }
         }, 20); // 1 second delay
+
+        // Update server status when player joins
+        $this->updateServerStatus();
+    }
+
+    /**
+     * Update server status based on overall server state
+     */
+    private function updateServerStatus(): void {
+        if ($this->plugin->getStatusUpdater() !== null) {
+            $currentPlayers = count($this->plugin->getServer()->getOnlinePlayers());
+            $maxPlayers = $this->plugin->getConfig()->get("max-players", 16);
+            $serverAddress = $this->plugin->getConfig()->get("server-address", "localhost");
+            $serverPort = $this->plugin->getConfig()->get("server-port", 19132);
+            
+            $gameState = Arena::WAITING;
+            $arenaNames = $this->plugin->getAllArenaNames();
+            
+            foreach($arenaNames as $name){
+                $arena = $this->plugin->gameManager->getArena($name);
+                if($arena !== null && ($arena->isActive() || count($arena->getAllPlayers()) > 0)){
+                    $gameState = $arena->getGameState();
+                    break;
+                }
+            }
+            
+            $this->plugin->getStatusUpdater()->updateServerStatus(
+                $gameState, 
+                $currentPlayers, 
+                $maxPlayers, 
+                $serverAddress, 
+                $serverPort
+            );
+        }
     }
 }

@@ -13,6 +13,8 @@ use TNTRun\Listener\SpectatorListener;
 use TNTRun\Listener\SignListener;
 use pocketmine\network\Network;
 
+use TNTRun\database\AlphaDaysStatusUpdater;
+
 class Main extends PluginBase {
 
     /** @var GameManager */
@@ -30,7 +32,10 @@ class Main extends PluginBase {
     /** @var SignListener */
     public $signListener;
 
-    public function onEnable(){
+    /** @var AlphaDaysStatusUpdater */
+    public $statusUpdater;
+
+    public function onEnable(): void{
         // Ensure writable folder exists
         $this->initializeDirectories();
 
@@ -64,6 +69,8 @@ class Main extends PluginBase {
         // Register sign listener with multiple events
         $this->signListener = new SignListener($this);
         $pm->registerEvents($this->signListener, $this);
+
+        $this->initializeAlphaDaysIntegration();
 
         // Log current mode
         $editMode = $this->getConfig()->get("edit-mode", false);
@@ -132,9 +139,6 @@ class Main extends PluginBase {
         $this->getLogger()->info("Attempted to refresh " . count($signs) . " arena signs, successfully refreshed " . $refreshCount);
     }
 
-    /**
-     * Initialize required directories with proper error handling
-     */
     private function initializeDirectories(){
         try {
             // Ensure main data folder exists
@@ -166,16 +170,10 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Update signs for a specific arena using dynamic scanning
-     */
     public function updateArenaSignsFor(string $arenaName){
         $this->signListener->updateArenaSign($arenaName);
     }
 
-    /**
-     * Update all arena signs by scanning for all arenas
-     */
     public function updateAllArenaSigns(){
         $arenaNames = $this->getAllArenaNames();
         foreach($arenaNames as $arenaName){
@@ -183,9 +181,6 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Save arena data to separate file
-     */
     public function saveArena(string $name, array $data): bool {
         try {
             $arenaDir = $this->getDataFolder() . "arenas/";
@@ -209,9 +204,6 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Load arena data from file
-     */
     public function loadArena(string $name): ?array {
         try {
             $file = $this->getDataFolder() . "arenas/" . $name . ".json";
@@ -239,9 +231,6 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Delete arena file
-     */
     public function deleteArena(string $name): bool {
         try {
             $file = $this->getDataFolder() . "arenas/" . $name . ".json";
@@ -256,9 +245,6 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Get all arena names with improved error handling
-     */
     public function getAllArenaNames(): array {
         try {
             $arenaDir = $this->getDataFolder() . "arenas/";
@@ -292,9 +278,6 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Check if arena exists
-     */
     public function arenaExists(string $name): bool {
         $file = $this->getDataFolder() . "arenas/" . $name . ".json";
         return file_exists($file);
@@ -708,11 +691,8 @@ class Main extends PluginBase {
         return true;
     }
 
-    /**
-     * Join a player to an arena with proper validation
-     */
+
     public function joinPlayerToArena(Player $player, string $arenaName, bool $isAutoJoin = false): bool {
-        // Check if arena exists
         if(!$this->arenaExists($arenaName)){
             if(!$isAutoJoin) {
                 $player->sendMessage("§cArena §b" . $arenaName . " §cdoes not exist.");
@@ -720,7 +700,6 @@ class Main extends PluginBase {
             return false;
         }
         
-        // Load arena data
         $arenaData = $this->loadArena($arenaName);
         if($arenaData === null){
             if(!$isAutoJoin) {
@@ -729,7 +708,6 @@ class Main extends PluginBase {
             return false;
         }
         
-        // Check if arena setup is complete (has region)
         if($arenaData["region"] === null){
             if(!$isAutoJoin) {
                 $player->sendMessage("§cArena §b" . $arenaName . " §csetup is not complete! The region hasn't been set yet.");
@@ -752,7 +730,6 @@ class Main extends PluginBase {
             return false;
         }
 
-        // Check if player is already in this arena
         $allPlayers = $arena->getAllPlayers();
         if(isset($allPlayers[$player->getName()])){
             if(!$isAutoJoin) {
@@ -761,7 +738,6 @@ class Main extends PluginBase {
             return false;
         }
 
-        // Check max players
         $maxPlayers = $this->getConfig()->get("max-players-per-arena", 16);
         if(count($allPlayers) >= $maxPlayers){
             if(!$isAutoJoin) {
@@ -778,7 +754,6 @@ class Main extends PluginBase {
             $player->sendMessage("§aJoined TNT Run arena §b" . $arenaName . "§a!");
         }
         
-        // Show arena info
         $playerCount = count($arena->getAllPlayers());
         foreach($arena->getAllPlayers() as $arenaPlayer){
             if($arenaPlayer->getName() !== $player->getName()){
@@ -786,15 +761,11 @@ class Main extends PluginBase {
             }
         }
         
-        // Update arena signs when player joins
         $this->updateArenaSignsFor($arenaName);
         
         return true;
     }
 
-    /**
-     * Transfer players back to hub server with staggered delays
-     */
     public function transferPlayersToHub(array $players, string $reason = "game_end"): void {
         $hubConfig = $this->getConfig()->get("hub-server", []);
         
@@ -813,7 +784,6 @@ class Main extends PluginBase {
         $baseDelay = $hubConfig["transfer-delay"] ?? 3;
         $staggerDelay = $hubConfig["staggered-transfer-delay"] ?? 2;
 
-        // Transfer players with staggered delays
         $playerIndex = 0;
         foreach($players as $player){
             if($player->isOnline()){
@@ -846,15 +816,11 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Kick players from server after game ends (alternative to hub transfer)
-     */
     public function kickPlayersAfterGame(array $players): void {
         $kickMessage = $this->getConfig()->getNested("game-end.kick-message", "§cGame ended! Thanks for playing!");
         $baseDelay = $this->getConfig()->getNested("hub-server.transfer-delay", 3);
         $staggerDelay = $this->getConfig()->getNested("hub-server.staggered-transfer-delay", 2);
 
-        // Kick players with staggered delays
         $playerIndex = 0;
         foreach($players as $player){
             if($player->isOnline()){
@@ -882,9 +848,6 @@ class Main extends PluginBase {
         }
     }
 
-    /**
-     * Transfer a player to another server
-     */
     public function transferPlayer(Player $player, string $address, int $port = 19132, string $message = "You are being transferred"): bool {
         $ip = $this->lookupAddress($address);
         if($ip === null){
@@ -904,9 +867,6 @@ class Main extends PluginBase {
         return true;
     }
 
-    /**
-     * Resolve domain names to IP addresses with caching
-     */
     private function lookupAddress(string $address): ?string {
         if(preg_match("/^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$/", $address) > 0){
             return $address;
@@ -931,7 +891,77 @@ class Main extends PluginBase {
         $this->addressLookupCache = [];
     }
 
-    public function onDisable(){
+    public function onDisable(): void{
+        $kxMySQL = $this->getServer()->getPluginManager()->getPlugin("KXMySQL");
+        if ($this->statusUpdater !== null && $kxMySQL !== null && $kxMySQL->isEnabled()) {
+            $serverAddress = $this->getConfig()->get("server-address", "localhost");
+            $serverPort = $this->getConfig()->get("server-port", 19132);
+            
+            try {
+                $this->statusUpdater->markServerOffline($serverAddress, $serverPort);
+            } catch (\Exception $e) {
+                $this->getLogger()->warning("Failed to mark server offline: " . $e->getMessage());
+            }
+        }
+
         $this->getLogger()->info("§cTNT Run plugin disabled.");
+    }
+
+    /**
+     * @return AlphaDaysStatusUpdater|null
+     */
+    public function getStatusUpdater(): ?AlphaDaysStatusUpdater {
+        return $this->statusUpdater;
+    }
+
+    private function initializeAlphaDaysIntegration(): void {
+        $alphaDaysConfig = $this->getConfig()->get("alphadays", []);
+        if (!($alphaDaysConfig["enabled"] ?? false)) {
+            $this->getLogger()->info("AlphaDays integration disabled in config");
+            return;
+        }
+        
+        $kxMySQL = $this->getServer()->getPluginManager()->getPlugin("KXMySQL");
+        if ($kxMySQL === null) {
+            $this->getLogger()->warning("KXMySQL plugin not found! AlphaDays integration disabled.");
+            return;
+        }
+        
+        $this->statusUpdater = new AlphaDaysStatusUpdater($kxMySQL, $this);
+        
+        $serverName = $this->getConfig()->get("server-name", "TNTRun Server");
+        $serverAddress = $this->getConfig()->get("server-address", "localhost");
+        $serverPort = $this->getConfig()->get("server-port", 19132);
+        
+        if ($this->statusUpdater->registerServer($serverName, $serverAddress, $serverPort)) {
+            $this->getLogger()->info("Registered server with AlphaDays database: " . $serverName);
+        }
+        
+        $updateInterval = $alphaDaysConfig["update-interval"] ?? 40;
+        $this->getServer()->getScheduler()->scheduleRepeatingTask(
+            new class($this) extends \pocketmine\scheduler\PluginTask {
+
+                private $plugin;
+                
+                public function __construct($plugin) {
+                    parent::__construct($plugin);
+                    $this->plugin = $plugin;
+                }
+                
+                public function onRun($currentTick) {
+                    if ($this->plugin->statusUpdater === null) return;
+
+                    $arenaNames = $this->plugin->getAllArenaNames();
+
+                    foreach($arenaNames as $name){
+                        $arena = $this->plugin->gameManager->getArena($name);
+                        if ($arena !== null) $arena->updateServerStatus();
+                    }
+                }
+            },
+            $updateInterval
+        );
+        
+        $this->getLogger()->info("AlphaDays integration initialized");
     }
 }

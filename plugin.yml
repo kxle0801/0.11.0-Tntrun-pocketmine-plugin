@@ -1,6 +1,6 @@
 name: TNTRun
 main: TNTRun\Main
-version: 2.2.0
+version: 2.0.0
 api: [1.12.0]
 author: H20plex
 
@@ -71,5 +71,6 @@ permissions:
   tntrun.sign.create:
     description: Create and break arena signs
     default: op
+
 
 

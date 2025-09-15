@@ -4,7 +4,20 @@ auto-reset-on-death: true
 # Auto-join settings
 edit-mode: false
 auto-join-arena: "main"
-auto-join-enabled: false
+auto-join-enabled: true
+
+# Server information for AlphaDays integration
+server-name: "TNTRun #1"
+server-address: "127.0.0.1"
+server-port: 19136
+max-players: 16 # Must be same with game settings max-players
+
+# AlphaDays integration settings
+alphadays:
+  enabled: true
+  # Update interval in ticks (20 ticks = 1 second)
+  # 40 ticks (2 seconds) for more frequent updates
+  update-interval: 40
 
 # Hub server settings for built-in transfer
 hub-server:
